@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call of Clan Legends - Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #1a1a1a, #2a2a2a);
+            color: #e5e7eb;
+            font-family: 'Arial', sans-serif;
+        }
+        .cod-style {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #ff4500;
+            box-shadow: 0 0 10px #ff4500;
+        }
+        .medal {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom: 2px solid #ff4500;
+            color: #ff4500;
+        }
+        .employee-card {
+            background: linear-gradient(135deg, #ff4500, #ffd700);
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 15px #ffd700;
+            animation: glow 2s infinite alternate;
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 10px #ffd700; }
+            to { box-shadow: 0 0 20px #ffd700; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold text-orange-500">Call of UNKRA</h1>
+        <p class="text-lg text-gray-300">¡El campo de batalla más épico de Sud-America!</p>
+    </header>
+
+    <main class="w-full max-w-4xl cod-style rounded-lg p-6">
+        <section id="employee-of-month" class="mb-8">
+            <h2 class="text-2xl font-semibold text-orange-400 mb-4">¡Leyenda del Mes! 🥔</h2>
+            <div id="employee-card" class="employee-card p-6 rounded-lg text-center"></div>
+        </section>
+
+        <nav class="flex mb-6">
+            <div class="tab active" onclick="showTab('leaderboard')">Tabla de Leyendas</div>
+            <div class="tab" onclick="showTab('events')">Eventos</div>
+            <div class="tab" onclick="showTab('medals')">Medallas</div>
+        </nav>
+
+        <section id="leaderboard" class="tab-content">
+            <h2 class="text-2xl font-semibold text-orange-400 mb-4">Tabla de Leyendas</h2>
+            <div id="leaderboard-list" class="space-y-4"></div>
+        </section>
+
+        <section id="events" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold text-orange-400 mb-4">Eventos Recientes</h2>
+            <div id="event-list" class="space-y-4"></div>
+        </section>
+
+        <section id="medals" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold text-orange-400 mb-4">Catálogo de Medallas</h2>
+            <div id="medal-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+    </main>
+
+    <script>
+        // JSON de integrantes
+        const users = [
+            { id: 1, name: "Taz", points: 150, medals: ["🏕️", "💀", "🎯"] },
+            { id: 2, name: "MarioZR", points: 120, medals: ["🗡️", "😂"] },
+            { id: 3, name: "KillerShadow", points: 100, medals: ["💥", "🎁"] },
+            { id: 4, name: "LaParka", points: 80, medals: ["😵"] }
+        ];
+
+        // JSON de eventos
+        const events = [
+            {
+                id: 1,
+                name: "Cuchillo al Amanecer",
+                date: "2025-05-05",
+                results: [
+                    { userId: 2, medals: ["🗡️"], points: 25 },
+                    { userId: 1, medals: ["😂"], points: 20 }
+                ]
+            },
+            {
+                id: 2,
+                name: "Cazadores de Cabezas",
+                date: "2025-05-07",
+                results: [
+                    { userId: 3, medals: ["💥"], points: 25 },
+                    { userId: 1, medals: ["🎯"], points: 20 }
+                ]
+            }
+        ];
+
+        // JSON de tipos de medallas
+        const medals = [
+            { id: "🏕️", name: "Rey Campero", description: "¡El maestro del arbusto! Pasa más tiempo quieto que un francotirador en siesta.", icon: "🏕️" },
+            { id: "💀", name: "Máquina de Matar", description: "¡Bajas a diestra y siniestra! Nadie sale vivo de tu mira.", icon: "💀" },
+            { id: "🎯", name: "Rey del Ratio", description: "¡K/D impecable! Matas con estilo y mueres... casi nunca.", icon: "🎯" },
+            { id: "🗡️", name: "Cuchillo Fantasma", description: "¡Sigilo puro! Tu cuchillo es más letal que un misil.", icon: "🗡️" },
+            { id: "😂", name: "Fail Épico", description: "¡El momento más gracioso! Hiciste reír a todos con tu caída estelar.", icon: "😂" },
+            { id: "💥", name: "Cabeza Dura", description: "¡Headshots everywhere! Tu puntería es de otro planeta.", icon: "💥" },
+            { id: "🎁", name: "Santa de Munición", description: "¡El alma generosa! Llenas de balas a tus compas.", icon: "🎁" },
+            { id: "😵", name: "Mártir Legendario", description: "¡Das la vida por el equipo! Mueres mucho, pero con honor.", icon: "😵" }
+        ];
+
+        // Función para cambiar pestañas
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // Función para mostrar la Leyenda del Mes
+        function renderEmployeeOfMonth() {
+            const employeeCard = document.getElementById('employee-card');
+            const topUser = users.sort((a, b) => b.points - a.points)[0]; // Jugador con más puntos
+            employeeCard.innerHTML = `
+                <h3 class="text-2xl font-bold text-black">${topUser.name}</h3>
+                <p class="text-lg text-black">¡La Leyenda del Mes! 🥔</p>
+                <div class="flex justify-center my-2">
+                    ${topUser.medals.map(medal => `<span class="medal" title="${medals.find(m => m.id === medal).name}">${medal}</span>`).join('')}
+                </div>
+                <p class="text-black font-semibold">${topUser.points} Puntos de Leyenda</p>
+                <p class="text-sm text-black mt-2">"¡${topUser.name} sirve bajas como papas fritas y lidera el clan con puro estilo McDestruction!"</p>
+            `;
+        }
+
+        // Función para mostrar la tabla de líderes
+        function renderLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            users.sort((a, b) => b.points - a.points);
+            users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'flex justify-between items-center bg-gray-800 p-4 rounded-lg';
+                userDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-lg font-bold mr-4">${user.name}</span>
+                        <div class="flex">
+                            ${user.medals.map(medal => `<span class="medal" title="${medals.find(m => m.id === medal).name}">${medal}</span>`).join('')}
+                        </div>
+                    </div>
+                    <span class="text-orange-400 font-semibold">${user.points} PL</span>
+                `;
+                leaderboardList.appendChild(userDiv);
+            });
+        }
+
+        // Función para mostrar eventos recientes
+        function renderEvents() {
+            const eventList = document.getElementById('event-list');
+            eventList.innerHTML = '';
+            events.forEach(event => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'bg-gray-800 p-4 rounded-lg';
+                eventDiv.innerHTML = `
+                    <h3 class="text-lg font-semibold text-orange-400">${event.name}</h3>
+                    <p class="text-gray-400">Fecha: ${event.date}</p>
+                    <div class="mt-2">
+                        ${event.results.map(result => {
+                            const user = users.find(u => u.id === result.userId);
+                            return `
+                                <div class="flex justify-between">
+                                    <span>${user.name}</span>
+                                    <div>
+                                        ${result.medals.map(medal => `<span class="medal" title="${medals.find(m => m.id === medal).name}">${medal}</span>`).join('')}
+                                        <span class="text-orange-400">+${result.points} PL</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                eventList.appendChild(eventDiv);
+            });
+        }
+
+        // Función para mostrar el catálogo de medallas
+        function renderMedals() {
+            const medalList = document.getElementById('medal-list');
+            medalList.innerHTML = '';
+            medals.forEach(medal => {
+                const medalDiv = document.createElement('div');
+                medalDiv.className = 'bg-gray-800 p-4 rounded-lg flex items-center';
+                medalDiv.innerHTML = `
+                    <span class="medal">${medal.icon}</span>
+                    <div>
+                        <h3 class="text-lg font-semibold text-orange-400">${medal.name}</h3>
+                        <p class="text-gray-400">${medal.description}</p>
+                    </div>
+                `;
+                medalList.appendChild(medalDiv);
+            });
+        }
+
+        // Inicializar el portal
+        document.addEventListener('DOMContentLoaded', () => {
+            renderEmployeeOfMonth();
+            renderLeaderboard();
+            renderEvents();
+            renderMedals();
+        });
+    </script>
+</body>
+</html>
